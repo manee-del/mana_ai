@@ -1,246 +1,625 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mana AI - Cyber UI</title>
 
-    <title>Mana AI</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+    :root {
+        --bg-color: #060608;
+        --sidebar-bg: #030305;
+        --grid-color: rgba(255, 255, 255, 0.03);
+        --primary-pink: #d926ff;
+        --primary-cyan: #00f0ff;
+        --border-purple: #7a1fa2;
+        --text-main: #a9b1d6;
+        --text-muted: #565f89;
+    }
 
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Fira Code', monospace;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* --- Splash Screen --- */
+    #splash {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: var(--bg-color);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        animation: splashFadeOut 0.8s cubic-bezier(0.8, 0, 0.2, 1) forwards;
+        animation-delay: 3.8s; /* Stays for 3.8 seconds */
+    }
+
+    .terminal-loader {
+        width: 450px;
+        padding: 30px;
+        border: 1px solid var(--border-purple);
+        background: rgba(3, 3, 5, 0.9);
+        box-shadow: 0 0 30px rgba(122, 31, 162, 0.2), inset 0 0 15px rgba(122, 31, 162, 0.1);
+        position: relative;
+    }
+
+    .terminal-loader::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        background: var(--primary-pink);
+        box-shadow: 0 0 10px var(--primary-pink);
+    }
+
+    .sys-title {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .init-text {
+        color: var(--primary-cyan);
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-bottom: 25px;
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+
+    .loading-bar {
+        width: 100%;
+        height: 6px;
+        background: rgba(255,255,255,0.05);
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 3px;
+    }
+
+    .progress {
+        height: 100%;
+        background: var(--primary-cyan);
+        width: 0%;
+        animation: loadProgress 2.5s ease-in-out forwards;
+        animation-delay: 0.5s;
+        box-shadow: 0 0 15px var(--primary-cyan);
+    }
+
+    .status-logs p {
+        color: var(--text-main);
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        opacity: 0;
+    }
+
+    .status-logs p:nth-child(1) { animation: popIn 0.1s forwards; animation-delay: 0.8s; }
+    .status-logs p:nth-child(2) { animation: popIn 0.1s forwards; animation-delay: 1.6s; }
+    .status-logs p:nth-child(3) { animation: popIn 0.1s forwards; animation-delay: 2.6s; }
+
+    .blink {
+        animation: blinkCursor 0.8s infinite;
+    }
+
+    @keyframes loadProgress {
+        0% { width: 0%; }
+        20% { width: 15%; }
+        50% { width: 55%; }
+        80% { width: 80%; }
+        100% { width: 100%; }
+    }
+
+    @keyframes popIn { to { opacity: 1; } }
+
+    @keyframes blinkCursor {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+
+    @keyframes splashFadeOut {
+        to {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: scale(1.05);
+            filter: blur(8px);
         }
+    }
 
-        body{
-            font-family:'Segoe UI',sans-serif;
-            background:#faf7f2;
-            color:#2d2d2d;
-            min-height:100vh;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            padding:30px;
-        }
+    /* Grid Background */
+    body::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 40px 40px;
+        z-index: 0;
+        pointer-events: none;
+    }
 
-        .container{
-            width:100%;
-            max-width:850px;
-            background:white;
-            border-radius:18px;
-            padding:30px;
-            box-shadow:0 10px 30px rgba(0,0,0,0.08);
-        }
+    /* Asteroid Canvas Background */
+    #asteroids {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1;
+        pointer-events: none;
+    }
 
-        .header{
-            text-align:center;
-            margin-bottom:25px;
-        }
+    /* Layout Wrapper */
+    .app-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        opacity: 0;
+        animation: appFadeIn 1s ease forwards;
+        animation-delay: 4.2s; /* Fades in after splash disappears */
+    }
 
-        .header h1{
-            color:#ff9933;
-            font-size:2rem;
-        }
+    @keyframes appFadeIn { to { opacity: 1; } }
 
-        .header p{
-            color:#666;
-            margin-top:8px;
-        }
+    /* Sidebar */
+    .sidebar {
+        width: 260px;
+        background-color: var(--sidebar-bg);
+        border-right: 1px solid rgba(122, 31, 162, 0.3);
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        z-index: 10;
+    }
 
-        .feature-select{
-            width:100%;
-            padding:12px;
-            border:1px solid #ddd;
-            border-radius:10px;
-            margin-bottom:15px;
-            font-size:15px;
-        }
+    .brand {
+        color: var(--primary-pink);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 40px;
+        text-shadow: 0 0 10px rgba(217, 38, 255, 0.4);
+        text-align: center;
+        letter-spacing: 2px;
+    }
 
-        textarea{
-            width:100%;
-            min-height:140px;
-            resize:vertical;
-            border:1px solid #ddd;
-            border-radius:10px;
-            padding:15px;
-            font-size:15px;
-            outline:none;
-        }
+    .nav-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        letter-spacing: 1px;
+    }
 
-        textarea:focus{
-            border-color:#138808;
-        }
+    .nav-menu { list-style: none; flex-grow: 1; }
 
-        button{
-            width:100%;
-            margin-top:15px;
-            padding:14px;
-            border:none;
-            border-radius:10px;
-            background:#138808;
-            color:white;
-            font-size:16px;
-            font-weight:600;
-            cursor:pointer;
-            transition:.2s;
-        }
+    .nav-item {
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        border-radius: 6px;
+        color: var(--primary-cyan);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        font-size: 0.9rem;
+    }
 
-        button:hover{
-            opacity:.9;
-        }
+    .nav-item:hover, .nav-item.active {
+        background: rgba(0, 240, 255, 0.05);
+        border: 1px solid rgba(0, 240, 255, 0.3);
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+    }
 
-        .loader{
-            display:none;
-            text-align:center;
-            margin-top:20px;
-            color:#ff9933;
-            font-weight:600;
-        }
+    .clear-btn {
+        margin-top: auto;
+        padding: 12px;
+        background: transparent;
+        color: var(--primary-pink);
+        border: 1px solid var(--primary-pink);
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 0.9rem;
+        transition: 0.3s;
+    }
 
-        .history{
-            margin-top:30px;
-        }
+    .clear-btn:hover {
+        background: rgba(217, 38, 255, 0.1);
+        box-shadow: 0 0 15px rgba(217, 38, 255, 0.3);
+    }
 
-        .bubble{
-            padding:15px;
-            border-radius:12px;
-            margin-bottom:15px;
-        }
+    /* Main Chat Area */
+    .main-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
 
-        .user{
-            background:#fff5e8;
-            border-left:5px solid #ff9933;
-        }
+    .chat-history {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-purple) transparent;
+    }
 
-        .ai{
-            background:#f1fff0;
-            border-left:5px solid #138808;
-        }
+    .chat-history::-webkit-scrollbar { width: 6px; }
+    .chat-history::-webkit-scrollbar-thumb {
+        background: var(--border-purple);
+        border-radius: 10px;
+    }
 
-        .error{
-            background:#ffecec;
-            border-left:5px solid #d9534f;
-        }
+    .bubble {
+        max-width: 80%;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-purple);
+        background: rgba(10, 10, 16, 0.8);
+        box-shadow: 0 0 15px rgba(122, 31, 162, 0.15);
+        line-height: 1.6;
+    }
 
-        h3{
-            margin-bottom:6px;
-        }
+    .bubble.user {
+        align-self: flex-end;
+        border-color: var(--primary-cyan);
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+    }
 
-        ul{
-            padding-left:20px;
-        }
+    .bubble.ai { align-self: flex-start; }
 
-        pre{
-            overflow-x:auto;
-        }
-    </style>
+    .bubble-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+    }
+
+    .user .bubble-header { color: var(--primary-cyan); }
+    .ai .bubble-header { color: var(--primary-pink); }
+
+    .bubble-content { font-size: 0.95rem; color: #e0e0e0; }
+
+    .bubble-content pre {
+        background: #000;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid var(--text-muted);
+        overflow-x: auto;
+        margin-top: 10px;
+    }
+
+    .bubble-content code { color: var(--primary-cyan); }
+
+    /* Input Area */
+    .input-container {
+        padding: 30px;
+        padding-top: 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .input-box {
+        width: 100%;
+        max-width: 800px;
+        background: #08080c;
+        border: 1px solid var(--border-purple);
+        border-radius: 16px;
+        display: flex;
+        align-items: flex-end;
+        padding: 10px 15px;
+        box-shadow: 0 0 20px rgba(122, 31, 162, 0.2);
+        transition: border-color 0.3s;
+    }
+
+    .input-box:focus-within {
+        border-color: var(--primary-pink);
+        box-shadow: 0 0 25px rgba(217, 38, 255, 0.3);
+    }
+
+    textarea {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: var(--primary-cyan);
+        font-size: 1rem;
+        resize: none;
+        outline: none;
+        min-height: 24px;
+        max-height: 150px;
+        padding: 10px 0;
+    }
+
+    textarea::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+        background: transparent;
+        border: none;
+        color: var(--border-purple);
+        cursor: pointer;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.3s;
+    }
+
+    .send-btn:hover { color: var(--primary-pink); }
+
+    .send-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+    /* Loader */
+    .loader {
+        display: none;
+        align-self: flex-start;
+        color: var(--primary-cyan);
+        font-size: 0.9rem;
+        animation: pulse 1.5s infinite;
+        margin-left: 20px;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 0.4; }
+        50% { opacity: 1; }
+        100% { opacity: 0.4; }
+    }
+</style>
 </head>
-
 <body>
 
-<div class="container">
-
-    <div class="header">
-        <h1>Mana AI</h1>
-        <p>Local AI Assistant powered by DeepSeek-R1 (Ollama)</p>
+<div id="splash">
+    <div class="terminal-loader">
+        <div class="sys-title">
+            <span>Created by Maneesh</span>
+            <span>240968352</span>
+        </div>
+        <div class="init-text">> INITIALIZING MANA...</div>
+        <div class="loading-bar">
+            <div class="progress"></div>
+        </div>
+        <div class="status-logs">
+            
+            
+            <p>[+] Starting... <span class="blink">_</span></p>
+        </div>
     </div>
+</div>
 
-    <select id="feature" class="feature-select">
-        <option value="explain">Explain a Concept</option>
-        <option value="summarize">Summarize Text</option>
-        <option value="rewrite">Rewrite Professionally</option>
-        <option value="bullet_points">Convert to Bullet Points</option>
-        <option value="translate">Translate Text</option>
-    </select>
+<canvas id="asteroids"></canvas>
 
-    <textarea
-        id="userInput"
-        placeholder="Enter your text here..."
-    ></textarea>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="brand">Mana AI</div>
+        
+        <div class="nav-label">Modes / Tools</div>
+        <ul class="nav-menu" id="featureMenu">
+            <li class="nav-item active" data-feature="explain">> Explain Concept</li>
+            <li class="nav-item" data-feature="summarize">> Summarize Text</li>
+            <li class="nav-item" data-feature="rewrite">> Rewrite Pro</li>
+            <li class="nav-item" data-feature="bullet_points">> Bullet Points</li>
+            <li class="nav-item" data-feature="translate">> Translate</li>
+        </ul>
 
-    <button onclick="generateResponse()">
-        Generate Response
-    </button>
+        <button class="clear-btn" onclick="clearHistory()">[ Clear Cache ]</button>
+    </aside>
 
-    <div class="loader" id="loader">
-        Generating response...
-    </div>
+    <main class="main-content">
+        <div id="chatHistory" class="chat-history">
+            <div class="bubble ai">
+                <div class="bubble-header">● Mana System</div>
+                <div class="bubble-content">
+                    <p>System initialized. Local neural link established via DeepSeek-R1.</p>
+                    <p>Select a module from the sidebar and input your query below.</p>
+                </div>
+            </div>
+        </div>
 
-    <div id="chatHistory" class="history"></div>
+        <div class="loader" id="loader">> Processing request...</div>
 
+        <div class="input-container">
+            <div class="input-box">
+                <textarea 
+                    id="userInput" 
+                    placeholder="Enter command or query here..." 
+                    rows="1"
+                    oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                <button class="send-btn" onclick="generateResponse()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
 </div>
 
 <script>
+    // --- Canvas Asteroid Animation ---
+    const canvas = document.getElementById('asteroids');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let particles = [];
 
-async function generateResponse() {
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-    const text = document.getElementById("userInput").value.trim();
-    const feature = document.getElementById("feature").value;
-
-    const history = document.getElementById("chatHistory");
-    const loader = document.getElementById("loader");
-
-    if (!text) {
-        alert("Please enter some text.");
-        return;
+    class Asteroid {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.length = Math.random() * 80 + 20;
+            this.speed = Math.random() * 2 + 0.5;
+            this.opacity = Math.random() * 0.5 + 0.1;
+            this.angle = Math.PI / 4; 
+        }
+        update() {
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed;
+            if (this.x > width + this.length || this.y > height + this.length) {
+                this.x = Math.random() * width - this.length;
+                this.y = -this.length;
+            }
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x - Math.cos(this.angle) * this.length, this.y - Math.sin(this.angle) * this.length);
+            ctx.strokeStyle = `rgba(0, 240, 255, ${this.opacity})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(217, 38, 255, ${this.opacity + 0.2})`;
+            ctx.fill();
+        }
     }
 
-    loader.style.display = "block";
+    for (let i = 0; i < 35; i++) {
+        particles.push(new Asteroid());
+    }
 
-    history.innerHTML =
-    `
-    <div class="bubble user">
-        <h3>You</h3>
-        <p>${text}</p>
-    </div>
-    ` + history.innerHTML;
-
-    try {
-
-        const response = await fetch("/api/generate", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                text,
-                feature
-            })
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
+            p.update();
+            p.draw();
         });
+        requestAnimationFrame(animate);
+    }
+    animate();
 
-        const data = await response.json();
+    // --- Chat Logic ---
+    const historyKey = "mana_ai_chat_history_v2";
+    let currentFeature = "explain";
 
-        if (data.error) {
-            throw new Error(data.error);
+    // Handle Sidebar Clicks
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            e.target.classList.add('active');
+            currentFeature = e.target.getAttribute('data-feature');
+        });
+    });
+
+    // Handle Enter to Submit
+    document.getElementById("userInput").addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            generateResponse();
+        }
+    });
+
+    window.onload = () => {
+        const savedHistory = localStorage.getItem(historyKey);
+        if(savedHistory){
+            document.getElementById("chatHistory").innerHTML = savedHistory;
+            // Delay scroll to bottom until after splash screen logic
+            setTimeout(scrollToBottom, 4000); 
+        }
+    };
+
+    function scrollToBottom() {
+        const historyDiv = document.getElementById("chatHistory");
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    async function generateResponse() {
+        const inputEl = document.getElementById("userInput");
+        const text = inputEl.value.trim();
+        const history = document.getElementById("chatHistory");
+        const loader = document.getElementById("loader");
+
+        if(!text) return;
+
+        loader.style.display = "block";
+        inputEl.value = "";
+        inputEl.style.height = 'auto'; 
+
+        // Append User Bubble
+        const userHtml = `
+        <div class="bubble user">
+            <div class="bubble-header">● You <span>[${currentFeature}]</span></div>
+            <div class="bubble-content"><p>${text}</p></div>
+        </div>
+        `;
+        history.innerHTML += userHtml;
+        scrollToBottom();
+        localStorage.setItem(historyKey, history.innerHTML);
+
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text, feature: currentFeature })
+            });
+
+            const data = await response.json();
+            if(data.error) throw new Error(data.error);
+
+            // Append AI Bubble
+            const aiHtml = `
+            <div class="bubble ai">
+                <div class="bubble-header">● Mana AI</div>
+                <div class="bubble-content">${marked.parse(data.response)}</div>
+            </div>
+            `;
+            history.innerHTML += aiHtml;
+
+        } catch(error) {
+            const errHtml = `
+            <div class="bubble ai" style="border-color: #ff3333;">
+                <div class="bubble-header" style="color: #ff3333;">● System Error</div>
+                <div class="bubble-content"><p>${error.message}</p></div>
+            </div>
+            `;
+            history.innerHTML += errHtml;
         }
 
-        history.innerHTML =
-        `
-        <div class="bubble ai">
-            <h3>Mana AI</h3>
-            ${marked.parse(data.response)}
-        </div>
-        ` + history.innerHTML;
-
-    } catch (error) {
-
-        history.innerHTML =
-        `
-        <div class="bubble error">
-            <h3>Error</h3>
-            <p>${error.message}</p>
-        </div>
-        ` + history.innerHTML;
+        localStorage.setItem(historyKey, history.innerHTML);
+        loader.style.display = "none";
+        scrollToBottom();
     }
 
-    loader.style.display = "none";
-    document.getElementById("userInput").value = "";
-}
-
+    async function clearHistory() {
+        try {
+            await fetch("/api/clear", { method: "POST" });
+            localStorage.removeItem(historyKey);
+            document.getElementById("chatHistory").innerHTML = `
+            <div class="bubble ai">
+                <div class="bubble-header">● Mana System</div>
+                <div class="bubble-content"><p>Memory cache cleared. Awaiting new instructions.</p></div>
+            </div>
+            `;
+        } catch(error) {
+            console.error(error);
+        }
+    }
 </script>
-
 </body>
 </html>
