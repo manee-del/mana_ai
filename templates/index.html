@@ -10,14 +10,16 @@
 
 <style>
     :root {
-        --bg-color: #060608;
-        --sidebar-bg: #030305;
-        --grid-color: rgba(255, 255, 255, 0.03);
-        --primary-pink: #d926ff;
-        --primary-cyan: #00f0ff;
-        --border-purple: #7a1fa2;
-        --text-main: #a9b1d6;
-        --text-muted: #565f89;
+--bg-color: #050816;
+--sidebar-bg: #02040d;
+--grid-color: rgba(120, 180, 255, 0.05);
+
+--primary-pink: #ff6ec7;
+--primary-cyan: #00e5ff;
+--border-purple: #6c63ff;
+
+--text-main: #e6f1ff;
+--text-muted: #8fa3c7;
     }
 
     * {
@@ -205,7 +207,63 @@
         letter-spacing: 1px;
     }
 
-    .nav-menu { list-style: none; flex-grow: 1; }
+    .nav-menu {
+        list-style: none;
+        margin-bottom: 24px;
+    }
+
+    .model-panel {
+        margin-bottom: 24px;
+    }
+
+    .model-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .model-select {
+        width: 100%;
+        min-width: 0;
+        background: rgba(10, 10, 16, 0.85);
+        border: 1px solid rgba(0, 240, 255, 0.28);
+        border-radius: 6px;
+        color: var(--primary-cyan);
+        cursor: pointer;
+        font-size: 0.82rem;
+        padding: 10px;
+        outline: none;
+    }
+
+    .model-select:focus {
+        border-color: var(--primary-pink);
+        box-shadow: 0 0 12px rgba(217, 38, 255, 0.2);
+    }
+
+    .model-refresh {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        background: transparent;
+        border: 1px solid rgba(217, 38, 255, 0.55);
+        border-radius: 6px;
+        color: var(--primary-pink);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: 0.2s;
+    }
+
+    .model-refresh:hover {
+        background: rgba(217, 38, 255, 0.1);
+        box-shadow: 0 0 12px rgba(217, 38, 255, 0.25);
+    }
+
+    .model-status {
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        line-height: 1.4;
+        margin-top: 8px;
+    }
 
     .nav-item {
         padding: 12px 15px;
@@ -240,6 +298,72 @@
     .clear-btn:hover {
         background: rgba(217, 38, 255, 0.1);
         box-shadow: 0 0 15px rgba(217, 38, 255, 0.3);
+    }
+
+    .history-panel {
+        flex-grow: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 18px;
+    }
+
+    .history-list {
+        min-height: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-right: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-purple) transparent;
+    }
+
+    .history-list::-webkit-scrollbar { width: 5px; }
+    .history-list::-webkit-scrollbar-thumb {
+        background: var(--border-purple);
+        border-radius: 10px;
+    }
+
+    .history-entry {
+        width: 100%;
+        background: rgba(10, 10, 16, 0.72);
+        border: 1px solid rgba(122, 31, 162, 0.28);
+        border-radius: 6px;
+        color: var(--text-main);
+        cursor: pointer;
+        padding: 10px;
+        text-align: left;
+        transition: 0.2s;
+    }
+
+    .history-entry:hover {
+        border-color: rgba(0, 240, 255, 0.45);
+        color: var(--primary-cyan);
+    }
+
+    .history-mode {
+        color: var(--primary-pink);
+        display: block;
+        font-size: 0.7rem;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    .history-preview {
+        display: block;
+        font-size: 0.78rem;
+        line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .empty-history {
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        line-height: 1.5;
+        padding: 8px 2px;
     }
 
     /* Main Chat Area */
@@ -285,6 +409,13 @@
 
     .bubble.ai { align-self: flex-start; }
 
+    .bubble.error {
+        border-color: #ff4d6d;
+        box-shadow: 0 0 15px rgba(255, 77, 109, 0.16);
+    }
+
+    .bubble.error .bubble-header { color: #ff4d6d; }
+
     .bubble-header {
         display: flex;
         align-items: center;
@@ -306,6 +437,14 @@
         overflow-x: auto;
         margin-top: 10px;
     }
+    .bubble-content ol {
+    padding-left: 20px;
+    margin-left: 0;
+}
+
+.bubble-content li {
+    color: var(--text-main);
+}
 
     .bubble-content code { color: var(--primary-cyan); }
 
@@ -408,6 +547,17 @@
 <div class="app-container">
     <aside class="sidebar">
         <div class="brand">Mana AI</div>
+
+        <div class="model-panel">
+            <div class="nav-label">Ollama Model</div>
+            <div class="model-row">
+                <select id="modelSelect" class="model-select" aria-label="Ollama model">
+                    <option value="">Loading models...</option>
+                </select>
+                <button class="model-refresh" type="button" onclick="loadAvailableModels()" title="Refresh models">R</button>
+            </div>
+            <p id="modelStatus" class="model-status">Checking local Ollama models...</p>
+        </div>
         
         <div class="nav-label">Modes / Tools</div>
         <ul class="nav-menu" id="featureMenu">
@@ -418,7 +568,14 @@
             <li class="nav-item" data-feature="translate">> Translate</li>
         </ul>
 
-        <button class="clear-btn" onclick="clearHistory()">[ Clear Cache ]</button>
+        <div class="history-panel">
+            <div class="nav-label">Chat History</div>
+            <div id="historyList" class="history-list">
+                <p class="empty-history">No saved chats yet.</p>
+            </div>
+        </div>
+
+        <button class="clear-btn" onclick="clearHistory()">[ Clear History ]</button>
     </aside>
 
     <main class="main-content">
@@ -620,6 +777,339 @@
             console.error(error);
         }
     }
+</script>
+<script>
+    // --- Structured Chat History Feature ---
+    const structuredHistoryKey = "mana_ai_structured_chat_history_v1";
+    const selectedModelKey = "mana_ai_selected_model_v1";
+    const structuredFeatureLabels = {
+        explain: "Explain Concept",
+        summarize: "Summarize Text",
+        rewrite: "Rewrite Pro",
+        bullet_points: "Bullet Points",
+        translate: "Translate"
+    };
+
+    let structuredCurrentFeature = "explain";
+    let selectedModel = "";
+    let structuredChatItems = [];
+
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value || "";
+        return div.innerHTML;
+    }
+
+    function renderAssistantContent(value) {
+        if (window.marked) return marked.parse(value || "");
+        return `<p>${escapeHtml(value).replace(/\n/g, "<br>")}</p>`;
+    }
+
+    function welcomeBubble(message = "") {
+        return `
+            <div class="bubble ai">
+                <div class="bubble-header">Mana System</div>
+                <div class="bubble-content">
+                    <p>${escapeHtml(message)}</p>
+                    <p>Select a module from the sidebar and input your query below.</p>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderStructuredChatHistory() {
+        const history = document.getElementById("chatHistory");
+
+        history.innerHTML = welcomeBubble() + structuredChatItems.map(item => {
+            const featureLabel = item.feature_label || structuredFeatureLabels[item.feature] || "Prompt Mode";
+            const modelLabel = item.model ? ` | ${item.model}` : "";
+            const statusClass = item.error ? " error" : "";
+            const aiLabel = item.error ? "System Error" : "Mana AI";
+            const aiContent = item.pending
+                ? "<p>Processing request...</p>"
+                : renderAssistantContent(item.assistant_response || "");
+
+            return `
+                <div class="bubble user" id="chat-${item.id}">
+                    <div class="bubble-header">You <span>[${escapeHtml(featureLabel + modelLabel)}]</span></div>
+                    <div class="bubble-content"><p>${escapeHtml(item.user_text)}</p></div>
+                </div>
+                <div class="bubble ai${statusClass}">
+                    <div class="bubble-header">${aiLabel}</div>
+                    <div class="bubble-content">${aiContent}</div>
+                </div>
+            `;
+        }).join("");
+
+        renderStructuredHistoryList();
+    }
+
+    function renderStructuredHistoryList() {
+        const historyList = document.getElementById("historyList");
+        if (!historyList) return;
+
+        const completedItems = structuredChatItems.filter(item => !item.pending && !item.error);
+
+        if (!completedItems.length) {
+            historyList.innerHTML = `<p class="empty-history">No saved chats yet.</p>`;
+            return;
+        }
+
+        historyList.innerHTML = completedItems.slice().reverse().map(item => {
+            const featureLabel = item.feature_label || structuredFeatureLabels[item.feature] || "Prompt Mode";
+            const modelLabel = item.model ? ` - ${item.model}` : "";
+            return `
+                <button class="history-entry" type="button" onclick="scrollToStructuredHistoryItem('${item.id}')">
+                    <span class="history-mode">${escapeHtml(featureLabel + modelLabel)}</span>
+                    <span class="history-preview">${escapeHtml(item.user_text)}</span>
+                </button>
+            `;
+        }).join("");
+    }
+
+    function saveStructuredHistory() {
+        const completedItems = structuredChatItems.filter(item => !item.pending && !item.error);
+        localStorage.setItem(structuredHistoryKey, JSON.stringify(completedItems));
+    }
+
+    function loadStructuredLocalHistory() {
+        try {
+            const savedHistory = JSON.parse(localStorage.getItem(structuredHistoryKey) || "[]");
+            structuredChatItems = Array.isArray(savedHistory) ? savedHistory : [];
+        } catch(error) {
+            structuredChatItems = [];
+            localStorage.removeItem(structuredHistoryKey);
+        }
+    }
+
+    async function syncStructuredServerHistory() {
+        try {
+            const response = await fetch("/api/history");
+            const data = await response.json();
+
+            if (!Array.isArray(data.history) || !data.history.length) return;
+
+            const existingIds = new Set(structuredChatItems.map(item => item.id));
+            data.history.forEach(item => {
+                if (!existingIds.has(item.id)) structuredChatItems.push(item);
+            });
+
+            saveStructuredHistory();
+            renderStructuredChatHistory();
+        } catch(error) {
+            console.error(error);
+        }
+    }
+
+    function scrollStructuredToBottom() {
+        const historyDiv = document.getElementById("chatHistory");
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    function scrollToStructuredHistoryItem(id) {
+        const item = document.getElementById(`chat-${id}`);
+        if (item) item.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function showStructuredSystemNotice(message, isError = false) {
+        const history = document.getElementById("chatHistory");
+        const className = isError ? "bubble ai error" : "bubble ai";
+
+        history.innerHTML += `
+            <div class="${className}">
+                <div class="bubble-header">${isError ? "System Error" : "Mana System"}</div>
+                <div class="bubble-content"><p>${escapeHtml(message)}</p></div>
+            </div>
+        `;
+
+        scrollStructuredToBottom();
+    }
+
+    function setModelStatus(message, isError = false) {
+        const status = document.getElementById("modelStatus");
+        if (!status) return;
+
+        status.textContent = message;
+        status.style.color = isError ? "#ff4d6d" : "var(--text-muted)";
+    }
+
+    function renderModelOptions(models, defaultModel) {
+        const select = document.getElementById("modelSelect");
+        if (!select) return;
+
+        const savedModel = localStorage.getItem(selectedModelKey);
+        const preferredModel = savedModel && models.includes(savedModel)
+            ? savedModel
+            : defaultModel && models.includes(defaultModel)
+                ? defaultModel
+                : models[0];
+
+        select.innerHTML = "";
+
+        models.forEach(model => {
+            const option = document.createElement("option");
+            option.value = model;
+            option.textContent = model;
+            select.appendChild(option);
+        });
+
+        selectedModel = preferredModel || models[0] || "";
+        select.value = selectedModel;
+
+        if (selectedModel) {
+            localStorage.setItem(selectedModelKey, selectedModel);
+            setModelStatus(`Using ${selectedModel}`);
+        }
+    }
+
+    async function loadAvailableModels() {
+        const select = document.getElementById("modelSelect");
+        if (!select) return;
+
+        select.innerHTML = `<option value="">Loading models...</option>`;
+        select.disabled = true;
+        setModelStatus("Checking local Ollama models...");
+
+        try {
+            const response = await fetch("/api/models");
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error || "Unable to load models.");
+
+            if (!Array.isArray(data.models) || !data.models.length) {
+                selectedModel = data.default_model || "";
+                select.innerHTML = selectedModel
+                    ? `<option value="${escapeHtml(selectedModel)}">${escapeHtml(selectedModel)}</option>`
+                    : `<option value="">No models found</option>`;
+                select.value = selectedModel;
+                setModelStatus(
+                    selectedModel
+                        ? `No installed models detected. Fallback: ${selectedModel}`
+                        : "No Ollama models found. Run ollama pull qwen2.5:latest first.",
+                    true
+                );
+                return;
+            }
+
+            renderModelOptions(data.models, data.default_model);
+        } catch(error) {
+            const fallbackModel = localStorage.getItem(selectedModelKey) || "deepseek-r1:8b";
+            selectedModel = fallbackModel;
+            select.innerHTML = `<option value="${escapeHtml(fallbackModel)}">${escapeHtml(fallbackModel)}</option>`;
+            select.value = fallbackModel;
+            setModelStatus(error.message, true);
+        } finally {
+            select.disabled = false;
+        }
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            structuredCurrentFeature = e.target.getAttribute('data-feature');
+        });
+    });
+
+    document.getElementById("modelSelect").addEventListener("change", (event) => {
+        selectedModel = event.target.value;
+        localStorage.setItem(selectedModelKey, selectedModel);
+        setModelStatus(`Using ${selectedModel}`);
+    });
+
+    function initializeStructuredApp() {
+        loadStructuredLocalHistory();
+        renderStructuredChatHistory();
+        syncStructuredServerHistory();
+        loadAvailableModels();
+        setTimeout(scrollStructuredToBottom, 4000);
+    }
+
+    window.loadAvailableModels = loadAvailableModels;
+    window.scrollToStructuredHistoryItem = scrollToStructuredHistoryItem;
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeStructuredApp);
+    } else {
+        initializeStructuredApp();
+    }
+
+    window.generateResponse = async function() {
+        const inputEl = document.getElementById("userInput");
+        const text = inputEl.value.trim();
+        const loader = document.getElementById("loader");
+
+        if (!text) {
+            showStructuredSystemNotice("Please enter some text before sending.", true);
+            return;
+        }
+
+        const pendingId = `pending-${Date.now()}`;
+        const pendingItem = {
+            id: pendingId,
+            feature: structuredCurrentFeature,
+            feature_label: structuredFeatureLabels[structuredCurrentFeature],
+            model: selectedModel,
+            user_text: text,
+            assistant_response: "",
+            pending: true
+        };
+
+        structuredChatItems.push(pendingItem);
+        renderStructuredChatHistory();
+        scrollStructuredToBottom();
+
+        loader.style.display = "block";
+        inputEl.value = "";
+        inputEl.style.height = "auto";
+
+        try {
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: text,
+                    feature: structuredCurrentFeature,
+                    model: selectedModel
+                })
+            });
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            const index = structuredChatItems.findIndex(item => item.id === pendingId);
+            if (index !== -1) structuredChatItems[index] = data.history_item;
+
+            saveStructuredHistory();
+            renderStructuredChatHistory();
+        } catch(error) {
+            const index = structuredChatItems.findIndex(item => item.id === pendingId);
+            const errorItem = {
+                ...pendingItem,
+                pending: false,
+                error: true,
+                assistant_response: error.message
+            };
+
+            if (index !== -1) structuredChatItems[index] = errorItem;
+            saveStructuredHistory();
+            renderStructuredChatHistory();
+        }
+
+        loader.style.display = "none";
+        scrollStructuredToBottom();
+    };
+
+    window.clearHistory = async function() {
+        try {
+            await fetch("/api/clear", { method: "POST" });
+        } catch(error) {
+            console.error(error);
+        }
+
+        structuredChatItems = [];
+        localStorage.removeItem(structuredHistoryKey);
+        renderStructuredChatHistory();
+        showStructuredSystemNotice("Memory cache cleared. Awaiting new instructions.");
+    };
 </script>
 </body>
 </html>
