@@ -127,17 +127,14 @@ OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=deepseek-r1:8b
 ```
 
-## Demo Video Outline
+## Demo Photos
+<img width="1750" height="904" alt="image" src="https://github.com/user-attachments/assets/5e751f4f-510a-4d13-b0c1-233664bb275c" />
 
-For a 3-5 minute demo:
+<img width="2806" height="1644" alt="image" src="https://github.com/user-attachments/assets/9254a818-772f-4814-8c8d-02a72e481f8a" />
 
-1. Show the home screen and agent modes.
-2. Choose "Startup Idea Validator."
-3. Enter a startup idea with constraints.
-4. Run the agent and point out the plan.
-5. Show memory lookup, web search, and calculator outputs.
-6. Explain how the final response uses the tool evidence.
-7. Run a second related prompt to demonstrate persistent memory.
+
+
+
 
 ## Why This Is Agentic
 
